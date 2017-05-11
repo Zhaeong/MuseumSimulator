@@ -40,30 +40,56 @@ public class MovementController : MonoBehaviour {
 
         CC.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
 
-        Debug.DrawRay(transform.position, MoveDirectionForward.normalized, Color.blue);
-        Debug.DrawRay(transform.position, ForwardNormalized, Color.red);
+        //Debug.DrawRay(transform.position, MoveDirectionForward.normalized, Color.blue);
+        Debug.DrawRay(transform.position, ForwardNormalized, Color.blue);
         Debug.DrawRay(transform.position, LeftNormalized, Color.red);
-        Debug.DrawRay(transform.position, (ForwardNormalized + LeftNormalized).normalized, Color.green);
+        //Debug.DrawRay(transform.position, (ForwardNormalized + LeftNormalized).normalized, Color.green);
 
         Vector3 Movement = Vector3.zero;
 
         if (Input.GetAxis("Horizontal") != 0 && Input.GetAxis("Vertical") == 0)
         {
+            Debug.Log("Left");
             Movement = LeftNormalized * Input.GetAxis("Horizontal");
         }
         else if (Input.GetAxis("Horizontal") == 0 && Input.GetAxis("Vertical") != 0)
         {
+            Debug.Log("Forward");
             Movement = ForwardNormalized * Input.GetAxis("Vertical");
         }
-        else
+        else if(Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") > 0)
         {
-            Movement = new Vector3(BothNormalized.x * Input.GetAxis("Horizontal"), BothNormalized.y, BothNormalized.z * Input.GetAxis("Vertical"));
-        }  
+            
+            //Movement = BothNormalized;
+            Movement = new Vector3(BothNormalized.x * Input.GetAxis("Vertical"), BothNormalized.y, BothNormalized.z * Input.GetAxis("Horizontal"));
+        }
+        else if (Input.GetAxis("Horizontal") < 0 && Input.GetAxis("Vertical") < 0)
+        {
+
+            //Movement = -BothNormalized;
+
+            Movement = new Vector3(BothNormalized.x * Input.GetAxis("Vertical"), BothNormalized.y, BothNormalized.z * Input.GetAxis("Horizontal"));
+        }
+        else if (Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") < 0)
+        {
+
+            Vector3 newMovement = Vector3.Reflect(BothNormalized, ForwardNormalized);
+            Movement = new Vector3(newMovement.x * Input.GetAxis("Horizontal"), newMovement.y, newMovement.z * Input.GetAxis("Horizontal"));
+        }
+        else if (Input.GetAxis("Horizontal") < 0 && Input.GetAxis("Vertical") > 0)
+        {
+
+            Vector3 newMovement = Vector3.Reflect(BothNormalized, LeftNormalized);
+            Movement = new Vector3(newMovement.x * Input.GetAxis("Vertical"), newMovement.y, newMovement.z * Input.GetAxis("Vertical"));
+
+        }
+
+        //Debug.DrawRay(transform.position, new Vector3(BothNormalized.x , BothNormalized.y, BothNormalized.z), Color.yellow);
+        //Debug.DrawRay(transform.position, new Vector3(-BothNormalized.x, -BothNormalized.y, -BothNormalized.z), Color.green);
+        //Debug.DrawRay(transform.position, Vector3.Reflect(BothNormalized, ForwardNormalized), Color.gray);
+        //Debug.DrawRay(transform.position, Vector3.Reflect(BothNormalized, LeftNormalized), Color.magenta);
 
         Debug.DrawRay(transform.position, Movement, Color.black);
-
-        moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));       
-
 
         CC.Move(Movement * MovementSpeed *  Time.deltaTime);
     }
