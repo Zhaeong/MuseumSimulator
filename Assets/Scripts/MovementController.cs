@@ -5,7 +5,7 @@ using UnityEngine;
 public class MovementController : MonoBehaviour {
 
     private Camera mainCamera;
-
+    public float smoothSpeed;
     public float MovementSpeed;
     public float HorizRotationSpeed, VerticalRotationSpeed;
     private float yaw, pitch;
@@ -13,10 +13,12 @@ public class MovementController : MonoBehaviour {
 
     private Vector3 moveDirection = Vector3.zero;
 
-    private CharacterController CC;
+    private Vector3 velocity = Vector3.zero;
+
+    //private CharacterController CC;
     // Use this for initialization
     void Start () {
-        CC = gameObject.GetComponent<CharacterController>();
+        //CC = gameObject.GetComponent<CharacterController>();
         mainCamera = Camera.main;
         yaw = 0.0f;
         pitch = 0.0f;
@@ -31,58 +33,71 @@ public class MovementController : MonoBehaviour {
 
         transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);            
 
+        //The movement is based on the way that the player is facing
         Vector3 MoveDirectionForward = mainCamera.transform.forward;        
 
         Vector3 ForwardNormalized = new Vector3(MoveDirectionForward.x, 0, MoveDirectionForward.z).normalized;
         Vector3 MoveRight = Vector3.Cross(ForwardNormalized, Vector3.down);
         Vector3 LeftNormalized = MoveRight.normalized;
-        Vector3 BothNormalized = (ForwardNormalized + LeftNormalized).normalized;
-
-        CC.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
+        Vector3 BothNormalized = (ForwardNormalized + LeftNormalized).normalized;        
 
         //Debug.DrawRay(transform.position, MoveDirectionForward.normalized, Color.blue);
-        Debug.DrawRay(transform.position, ForwardNormalized, Color.blue);
-        Debug.DrawRay(transform.position, LeftNormalized, Color.red);
+        //Debug.DrawRay(transform.position, ForwardNormalized, Color.blue);
+        //Debug.DrawRay(transform.position, LeftNormalized, Color.red);
         //Debug.DrawRay(transform.position, (ForwardNormalized + LeftNormalized).normalized, Color.green);
 
         Vector3 Movement = Vector3.zero;
 
-        if (Input.GetAxis("Horizontal") != 0 && Input.GetAxis("Vertical") == 0)
+        //The if statements specify the direction that it will move in
+        //Move Forward
+        if (Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") == 0)
         {
-            Debug.Log("Left");
-            Movement = LeftNormalized * Input.GetAxis("Horizontal");
+            Movement = LeftNormalized;
         }
-        else if (Input.GetAxis("Horizontal") == 0 && Input.GetAxis("Vertical") != 0)
+        //Move Backward
+        else if (Input.GetAxis("Horizontal") < 0 && Input.GetAxis("Vertical") == 0)
         {
-            Debug.Log("Forward");
-            Movement = ForwardNormalized * Input.GetAxis("Vertical");
+            Movement = -LeftNormalized;
         }
-        else if(Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") > 0)
+        //Move Left
+        else if (Input.GetAxis("Horizontal") == 0 && Input.GetAxis("Vertical") > 0)
         {
-            
-            //Movement = BothNormalized;
-            Movement = new Vector3(BothNormalized.x * Input.GetAxis("Vertical"), BothNormalized.y, BothNormalized.z * Input.GetAxis("Horizontal"));
+            Movement = ForwardNormalized;
         }
+        //Move Right
+        else if (Input.GetAxis("Horizontal") == 0 && Input.GetAxis("Vertical") < 0)
+        {
+            Movement = -ForwardNormalized;
+        }
+        //Move Forward Left
+        else if (Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") > 0)
+        {
+            Movement = BothNormalized;
+        }
+        //Move Forward Right
         else if (Input.GetAxis("Horizontal") < 0 && Input.GetAxis("Vertical") < 0)
         {
-
-            //Movement = -BothNormalized;
-
-            Movement = new Vector3(BothNormalized.x * Input.GetAxis("Vertical"), BothNormalized.y, BothNormalized.z * Input.GetAxis("Horizontal"));
+            Movement = -BothNormalized;
         }
+        //Move Backward Left
         else if (Input.GetAxis("Horizontal") > 0 && Input.GetAxis("Vertical") < 0)
         {
 
             Vector3 newMovement = Vector3.Reflect(BothNormalized, ForwardNormalized);
-            Movement = new Vector3(newMovement.x * Input.GetAxis("Horizontal"), newMovement.y, newMovement.z * Input.GetAxis("Horizontal"));
+            Movement = newMovement;
         }
+        //Move Backward Right
         else if (Input.GetAxis("Horizontal") < 0 && Input.GetAxis("Vertical") > 0)
         {
-
             Vector3 newMovement = Vector3.Reflect(BothNormalized, LeftNormalized);
-            Movement = new Vector3(newMovement.x * Input.GetAxis("Vertical"), newMovement.y, newMovement.z * Input.GetAxis("Vertical"));
-
+            Movement = newMovement;
         }
+        else
+        {
+            Movement = Vector3.zero ;
+        }
+
+        Vector3 DirectionToMove = transform.position + Movement;
 
         //Debug.DrawRay(transform.position, new Vector3(BothNormalized.x , BothNormalized.y, BothNormalized.z), Color.yellow);
         //Debug.DrawRay(transform.position, new Vector3(-BothNormalized.x, -BothNormalized.y, -BothNormalized.z), Color.green);
@@ -91,6 +106,8 @@ public class MovementController : MonoBehaviour {
 
         Debug.DrawRay(transform.position, Movement, Color.black);
 
-        CC.Move(Movement * MovementSpeed *  Time.deltaTime);
+        transform.position = Vector3.SmoothDamp(transform.position, DirectionToMove, ref velocity, smoothSpeed);
+
+        //CC.Move(Movement * MovementSpeed *  Time.deltaTime);
     }
 }
